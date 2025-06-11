@@ -25,7 +25,8 @@ interface PreloadStatus {
   isPreloaded: boolean
   progress: number
   error: string | null
-  lastUpdated: number | null
+  lastUpdated: Date | null
+  cacheAge: number
 }
 
 export function useCollectionPreloader(username: string) {
@@ -35,36 +36,66 @@ export function useCollectionPreloader(username: string) {
     progress: 0,
     error: null,
     lastUpdated: null,
+    cacheAge: 0,
   })
 
   const abortControllerRef = useRef<AbortController | null>(null)
   const preloadTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const lastUsernameRef = useRef<string>("")
+  const cacheCheckIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Memoized cache status check that doesn't cause re-renders
+  // Stable cache status check that only updates when cache actually changes
   const checkCacheStatus = useCallback(() => {
     if (!username) return
 
     const cached = cacheManager.get<Game[]>(`collection:${username}`)
-    const age = cacheManager.getCollectionAge(username)
+    const rawAge = cacheManager.getCollectionAge(username)
 
-    // Only update state if there's actually a change
     setStatus((prev) => {
       const newIsPreloaded = !!cached
-      const newLastUpdated = age ? Date.now() - age : null
+      const newLastUpdated = rawAge ? new Date(Date.now() - rawAge) : null
+      const newCacheAge = rawAge || 0
 
-      // Only update if values actually changed
-      if (prev.isPreloaded !== newIsPreloaded || prev.lastUpdated !== newLastUpdated) {
+      // Only update if cache status actually changed
+      if (
+        prev.isPreloaded !== newIsPreloaded ||
+        (prev.lastUpdated?.getTime() || 0) !== (newLastUpdated?.getTime() || 0)
+      ) {
         return {
           ...prev,
           isPreloaded: newIsPreloaded,
           lastUpdated: newLastUpdated,
+          cacheAge: newCacheAge,
           error: null,
         }
       }
       return prev
     })
   }, [username])
+
+  // Update cache age periodically but only when needed
+  useEffect(() => {
+    if (!username || !status.isPreloaded) return
+
+    // Update cache age every 10 seconds, but only if the component is still mounted
+    const updateCacheAge = () => {
+      const rawAge = cacheManager.getCollectionAge(username)
+      if (rawAge !== null) {
+        setStatus((prev) => ({
+          ...prev,
+          cacheAge: rawAge,
+        }))
+      }
+    }
+
+    cacheCheckIntervalRef.current = setInterval(updateCacheAge, 10000)
+
+    return () => {
+      if (cacheCheckIntervalRef.current) {
+        clearInterval(cacheCheckIntervalRef.current)
+      }
+    }
+  }, [username, status.isPreloaded])
 
   // Stable preload function
   const preloadCollection = useCallback(
@@ -131,12 +162,14 @@ export function useCollectionPreloader(username: string) {
 
         cacheManager.set(`collection:${username}`, games, 60 * 60 * 1000) // 1 hour TTL
 
+        const now = new Date()
         setStatus({
           isPreloading: false,
           isPreloaded: true,
           progress: 100,
           error: null,
-          lastUpdated: Date.now(),
+          lastUpdated: now,
+          cacheAge: 0,
         })
       } catch (error) {
         if (signal.aborted) return
@@ -176,7 +209,7 @@ export function useCollectionPreloader(username: string) {
     }
   }, [username, preloadCollection, checkCacheStatus])
 
-  // Background refresh every 30 minutes - but don't update display unnecessarily
+  // Background refresh every 30 minutes
   useEffect(() => {
     if (!username) return
 
@@ -191,9 +224,6 @@ export function useCollectionPreloader(username: string) {
 
     return () => clearInterval(interval)
   }, [username, preloadCollection])
-
-  // Stable cache age calculation that doesn't change on every render
-  const cacheAge = username ? cacheManager.getCollectionAge(username) : null
 
   // Get cached collection without triggering re-renders
   const getCachedCollection = useCallback((): Game[] | null => {
@@ -215,33 +245,22 @@ export function useCollectionPreloader(username: string) {
       if (preloadTimeoutRef.current) {
         clearTimeout(preloadTimeoutRef.current)
       }
+      if (cacheCheckIntervalRef.current) {
+        clearInterval(cacheCheckIntervalRef.current)
+      }
     }
   }, [])
 
-  const { isPreloading, isPreloaded, progress, error, lastUpdated } = status
+  const { isPreloading, isPreloaded, progress, error, lastUpdated, cacheAge } = status
 
   return {
-    preloadStatus: {
-      isPreloading,
-      isPreloaded,
-      progress,
-      error,
-      lastUpdated,
-    },
     isPreloading,
     isPreloaded,
     progress,
-    error: error,
+    error,
     lastUpdated,
     cacheAge,
-    startPreload: preloadCollection,
     getCachedCollection,
     refreshCollection,
-    refreshCache: refreshCollection,
-    cacheStats: {
-      totalEntries: 0,
-      hitRate: 0,
-      size: 0,
-    },
   }
 }

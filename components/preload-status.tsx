@@ -24,10 +24,11 @@ export function PreloadStatus({
   cacheAge,
   onRefresh,
 }: PreloadStatusProps) {
-  const formatCacheAge = (age: number) => {
-    if (age < 60) return `${Math.floor(age)}s ago`
-    if (age < 3600) return `${Math.floor(age / 60)}m ago`
-    return `${Math.floor(age / 3600)}h ago`
+  const formatCacheAge = (ageInMs: number) => {
+    const ageInSeconds = Math.floor(ageInMs / 1000)
+    if (ageInSeconds < 60) return `${ageInSeconds}s ago`
+    if (ageInSeconds < 3600) return `${Math.floor(ageInSeconds / 60)}m ago`
+    return `${Math.floor(ageInSeconds / 3600)}h ago`
   }
 
   if (error) {
@@ -79,12 +80,8 @@ export function PreloadStatus({
               <span className="text-green-200">Collection cached</span>
               <Zap className="w-4 h-4 text-yellow-400" />
               <span className="text-purple-200 text-sm">
-                {lastUpdated && (
-                  <>
-                    <Clock className="w-3 h-3 inline mr-1" />
-                    {formatCacheAge(cacheAge)}
-                  </>
-                )}
+                <Clock className="w-3 h-3 inline mr-1" />
+                {formatCacheAge(cacheAge)}
               </span>
             </div>
             <Button
