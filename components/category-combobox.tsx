@@ -1,12 +1,5 @@
 "use client"
-
-import * as React from "react"
-import { Check, ChevronsUpDown, Search } from "lucide-react"
-
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 const CATEGORIES = [
   "Abstract Strategy",
@@ -96,66 +89,29 @@ interface CategoryComboboxProps {
 }
 
 export function CategoryCombobox({ value, onValueChange }: CategoryComboboxProps) {
-  const [open, setOpen] = React.useState(false)
+  const handleValueChange = (newValue: string) => {
+    // Convert "any" back to empty string for the parent component
+    onValueChange(newValue === "any" ? "" : newValue)
+  }
+
+  // Convert empty string to "any" for the Select component
+  const selectValue = value === "" ? "any" : value
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          role="combobox"
-          aria-expanded={open}
-          className="w-full justify-between bg-gray-700 border-gray-500 text-gray-100 hover:bg-gray-600"
-        >
-          {value ? (
-            <span className="truncate">{value}</span>
-          ) : (
-            <span className="text-gray-400">Select a category...</span>
-          )}
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-full p-0" align="start">
-        <Command className="bg-gray-800 border-gray-600">
-          <div className="flex items-center border-b border-gray-600 px-3">
-            <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
-            <CommandInput
-              placeholder="Search categories..."
-              className="flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-gray-400 disabled:cursor-not-allowed disabled:opacity-50"
-            />
-          </div>
-          <CommandList>
-            <CommandEmpty className="py-6 text-center text-sm text-gray-400">No category found.</CommandEmpty>
-            <CommandGroup>
-              <CommandItem
-                value=""
-                onSelect={() => {
-                  onValueChange("")
-                  setOpen(false)
-                }}
-                className="text-gray-200 hover:bg-gray-700"
-              >
-                <Check className={cn("mr-2 h-4 w-4", value === "" ? "opacity-100" : "opacity-0")} />
-                <span className="text-gray-400">Any category</span>
-              </CommandItem>
-              {CATEGORIES.map((category) => (
-                <CommandItem
-                  key={category}
-                  value={category}
-                  onSelect={(currentValue) => {
-                    onValueChange(currentValue === value ? "" : currentValue)
-                    setOpen(false)
-                  }}
-                  className="text-gray-200 hover:bg-gray-700"
-                >
-                  <Check className={cn("mr-2 h-4 w-4", value === category ? "opacity-100" : "opacity-0")} />
-                  {category}
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
+    <Select value={selectValue} onValueChange={handleValueChange}>
+      <SelectTrigger className="bg-purple-800/50 border-purple-600 text-white hover:bg-purple-700/50">
+        <SelectValue placeholder="Select a category..." className="text-white" />
+      </SelectTrigger>
+      <SelectContent className="bg-purple-900 border-purple-700 max-h-60">
+        <SelectItem value="any" className="text-purple-300 focus:bg-purple-800 focus:text-white">
+          Any category
+        </SelectItem>
+        {CATEGORIES.map((category) => (
+          <SelectItem key={category} value={category} className="text-white focus:bg-purple-800 focus:text-white">
+            {category}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   )
 }

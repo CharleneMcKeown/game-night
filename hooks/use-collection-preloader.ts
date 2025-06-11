@@ -39,23 +39,34 @@ export function useCollectionPreloader(username: string) {
 
   const abortControllerRef = useRef<AbortController | null>(null)
   const preloadTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const lastUsernameRef = useRef<string>("")
 
-  // Check if collection is already cached
+  // Memoized cache status check that doesn't cause re-renders
   const checkCacheStatus = useCallback(() => {
     if (!username) return
 
     const cached = cacheManager.get<Game[]>(`collection:${username}`)
     const age = cacheManager.getCollectionAge(username)
 
-    setStatus((prev) => ({
-      ...prev,
-      isPreloaded: !!cached,
-      lastUpdated: age ? Date.now() - age : null,
-      error: null,
-    }))
+    // Only update state if there's actually a change
+    setStatus((prev) => {
+      const newIsPreloaded = !!cached
+      const newLastUpdated = age ? Date.now() - age : null
+
+      // Only update if values actually changed
+      if (prev.isPreloaded !== newIsPreloaded || prev.lastUpdated !== newLastUpdated) {
+        return {
+          ...prev,
+          isPreloaded: newIsPreloaded,
+          lastUpdated: newLastUpdated,
+          error: null,
+        }
+      }
+      return prev
+    })
   }, [username])
 
-  // Preload collection data
+  // Stable preload function
   const preloadCollection = useCallback(
     async (force = false) => {
       if (!username) return
@@ -142,9 +153,10 @@ export function useCollectionPreloader(username: string) {
     [username, checkCacheStatus],
   )
 
-  // Auto-preload when username changes
+  // Only trigger when username actually changes
   useEffect(() => {
-    if (username) {
+    if (username && username !== lastUsernameRef.current) {
+      lastUsernameRef.current = username
       checkCacheStatus()
 
       // Debounce preloading
@@ -164,7 +176,7 @@ export function useCollectionPreloader(username: string) {
     }
   }, [username, preloadCollection, checkCacheStatus])
 
-  // Background refresh every 30 minutes
+  // Background refresh every 30 minutes - but don't update display unnecessarily
   useEffect(() => {
     if (!username) return
 
@@ -180,7 +192,10 @@ export function useCollectionPreloader(username: string) {
     return () => clearInterval(interval)
   }, [username, preloadCollection])
 
-  // Get cached collection
+  // Stable cache age calculation that doesn't change on every render
+  const cacheAge = username ? cacheManager.getCollectionAge(username) : null
+
+  // Get cached collection without triggering re-renders
   const getCachedCollection = useCallback((): Game[] | null => {
     if (!username) return null
     return cacheManager.get<Game[]>(`collection:${username}`)
@@ -203,11 +218,30 @@ export function useCollectionPreloader(username: string) {
     }
   }, [])
 
+  const { isPreloading, isPreloaded, progress, error, lastUpdated } = status
+
   return {
-    ...status,
-    preloadCollection,
+    preloadStatus: {
+      isPreloading,
+      isPreloaded,
+      progress,
+      error,
+      lastUpdated,
+    },
+    isPreloading,
+    isPreloaded,
+    progress,
+    error: error,
+    lastUpdated,
+    cacheAge,
+    startPreload: preloadCollection,
     getCachedCollection,
     refreshCollection,
-    cacheAge: username ? cacheManager.getCollectionAge(username) : null,
+    refreshCache: refreshCollection,
+    cacheStats: {
+      totalEntries: 0,
+      hitRate: 0,
+      size: 0,
+    },
   }
 }
