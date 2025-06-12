@@ -1,4 +1,4 @@
-# Next.js board game app
+# Next.js board game app recommender
 
 *Automatically synced with your [v0.dev](https://v0.dev) deployments*
 
