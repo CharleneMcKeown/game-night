@@ -182,7 +182,7 @@ const MECHANISMS = [
   "Worker Placement",
   "Worker Placement with Dice Workers",
   "Worker Placement, Different Worker Types",
-  "Zone of Control"
+  "Zone of Control",
 ]
 
 interface MechanismComboboxProps {

@@ -84,7 +84,7 @@ const CATEGORIES = [
   "Word Game",
   "World War I",
   "World War II",
-  "Zombies"
+  "Zombies",
 ]
 
 interface CategoryComboboxProps {

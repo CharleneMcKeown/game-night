@@ -2,7 +2,7 @@ I'll help you verify and update the mechanisms list to match what's actually ava
 
 <CodeProject id="BGG Mechanism Update">
 
-```tsx file="components/mechanism-combobox.tsx"
+\`\`\`tsx file="components/mechanism-combobox.tsx"
 "use client"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
@@ -222,9 +222,9 @@ export function MechanismCombobox({ value, onValueChange }: MechanismComboboxPro
     </Select>
   )
 }
-```
+\`\`\`
 
-```tsx file="components/category-combobox.tsx"
+\`\`\`tsx file="components/category-combobox.tsx"
 "use client"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
@@ -346,7 +346,7 @@ export function CategoryCombobox({ value, onValueChange }: CategoryComboboxProps
     </Select>
   )
 }
-```
+\`\`\`
 
 </CodeProject>
 
