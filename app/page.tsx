@@ -187,16 +187,16 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100">
+    <div className="min-h-screen bg-purple-950 text-white">
       {/* Header */}
-      <header className="border-b border-gray-800">
+      <header className="border-b border-purple-800 bg-purple-900/50">
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center space-x-2">
             <div className="w-8 h-8 bg-white rounded-sm flex items-center justify-center">
-              <Cog className="w-5 h-5 text-black" />
+              <Cog className="w-5 h-5 text-purple-900" />
             </div>
-            <h1 className="text-2xl font-bold">BGG Recommender</h1>
-            <div className="flex items-center gap-1 text-xs bg-blue-600 text-white px-2 py-1 rounded">
+            <h1 className="text-2xl font-bold text-white">BGG Recommender</h1>
+            <div className="flex items-center gap-1 text-xs bg-purple-600 text-white px-2 py-1 rounded">
               <Zap className="w-3 h-3" />
               FAST
             </div>
@@ -207,35 +207,37 @@ export default function HomePage() {
       {/* Hero Section */}
       <section className="py-20 px-4">
         <div className="container mx-auto max-w-4xl text-center">
-          <h2 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-gray-100 to-gray-300 bg-clip-text text-transparent">
+          <h2 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-white to-purple-200 bg-clip-text text-transparent">
             Find Games to Play from Your Collection
           </h2>
-          <p className="text-xl text-gray-300 mb-12 max-w-2xl mx-auto">
+          <p className="text-xl text-purple-200 mb-12 max-w-2xl mx-auto">
             Discover games from your BoardGameGeek collection that match your current mood and player count.
-            <span className="block text-sm text-blue-400 mt-2">
+            <span className="block text-sm text-purple-300 mt-2">
               ⚡ Now with instant recommendations via smart caching
             </span>
           </p>
 
           {/* Search Form */}
-          <Card className="bg-gray-800 border-gray-600 max-w-3xl mx-auto">
+          <Card className="bg-purple-900/30 border-purple-700 max-w-3xl mx-auto backdrop-blur-sm">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2 text-white">
                 <Search className="w-5 h-5" />
                 Browse Your Collection
               </CardTitle>
-              <CardDescription>Filter your owned games by preferences</CardDescription>
+              <CardDescription className="text-purple-200">Filter your owned games by preferences</CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="username">BGG Username (Required)</Label>
+                  <Label htmlFor="username" className="text-white">
+                    BGG Username (Required)
+                  </Label>
                   <Input
                     id="username"
                     placeholder="Enter your BoardGameGeek username"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    className="bg-gray-700 border-gray-500 text-gray-100 placeholder:text-gray-400"
+                    className="bg-purple-800/50 border-purple-600 text-white placeholder:text-purple-300 focus:border-purple-400"
                     required
                   />
                 </div>
@@ -255,24 +257,24 @@ export default function HomePage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
-                    <Label>Preferred Mechanism</Label>
+                    <Label className="text-white">Preferred Mechanism</Label>
                     <MechanismCombobox value={mechanism} onValueChange={setMechanism} />
                   </div>
 
                   <div className="space-y-2">
-                    <Label>Category/Theme</Label>
+                    <Label className="text-white">Category/Theme</Label>
                     <CategoryCombobox value={category} onValueChange={setCategory} />
                   </div>
 
                   <div className="space-y-2">
-                    <Label>Player Count</Label>
+                    <Label className="text-white">Player Count</Label>
                     <Select value={playerCount} onValueChange={setPlayerCount}>
-                      <SelectTrigger className="bg-gray-700 border-gray-500 text-gray-100">
+                      <SelectTrigger className="bg-purple-800/50 border-purple-600 text-white">
                         <SelectValue placeholder="Select player count" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="bg-purple-900 border-purple-700">
                         {PLAYER_COUNTS.map((count) => (
-                          <SelectItem key={count.value} value={count.value}>
+                          <SelectItem key={count.value} value={count.value} className="text-white focus:bg-purple-800">
                             <div className="flex items-center gap-2">
                               <Users className="w-4 h-4" />
                               {count.label}
@@ -285,7 +287,11 @@ export default function HomePage() {
                 </div>
 
                 <div className="flex gap-2">
-                  <Button type="submit" className="flex-1 bg-white text-black hover:bg-gray-200" disabled={loading}>
+                  <Button
+                    type="submit"
+                    className="flex-1 bg-white text-purple-900 hover:bg-purple-100"
+                    disabled={loading}
+                  >
                     {loading ? (
                       <>
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -305,7 +311,7 @@ export default function HomePage() {
                     variant="outline"
                     onClick={handleTestCollection}
                     disabled={loading}
-                    className="bg-gray-700 border-gray-500 text-gray-100 hover:bg-gray-600"
+                    className="bg-purple-800/50 border-purple-600 text-white hover:bg-purple-700/50"
                   >
                     <Bug className="w-4 h-4" />
                   </Button>
@@ -333,15 +339,15 @@ export default function HomePage() {
       {debugInfo && (
         <section className="px-4 pb-8">
           <div className="container mx-auto max-w-4xl">
-            <Card className="bg-blue-900/30 border-blue-700">
+            <Card className="bg-purple-800/30 border-purple-600">
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">
-                  <p className="text-blue-200 text-sm">
+                  <p className="text-purple-200 text-sm">
                     Debug: Found {debugInfo.totalInCollection} games in collection, showing {debugInfo.afterFiltering}{" "}
                     games
                     {debugInfo.cached && <span className="ml-2 text-green-300">⚡ CACHED</span>}
                   </p>
-                  <p className="text-blue-200 text-xs">Response time: {debugInfo.responseTime}</p>
+                  <p className="text-purple-200 text-xs">Response time: {debugInfo.responseTime}</p>
                 </div>
               </CardContent>
             </Card>
@@ -354,25 +360,25 @@ export default function HomePage() {
         <section className="px-4 pb-20">
           <div className="container mx-auto max-w-6xl">
             <div className="mb-8">
-              <h3 className="text-3xl font-bold mb-2 text-gray-100">Games from Your Collection</h3>
-              <p className="text-gray-300">Found {games.length} games in your collection matching your preferences</p>
+              <h3 className="text-3xl font-bold mb-2 text-white">Games from Your Collection</h3>
+              <p className="text-purple-200">Found {games.length} games in your collection matching your preferences</p>
               <div className="flex flex-wrap gap-2 mt-2">
                 {mechanism && (
-                  <div className="flex items-center gap-1 text-gray-400 text-sm">
+                  <div className="flex items-center gap-1 text-purple-300 text-sm">
                     <Cog className="w-3 h-3" />
-                    <span className="text-gray-300">{mechanism}</span>
+                    <span className="text-purple-200">{mechanism}</span>
                   </div>
                 )}
                 {category && (
-                  <div className="flex items-center gap-1 text-gray-400 text-sm">
+                  <div className="flex items-center gap-1 text-purple-300 text-sm">
                     <Tag className="w-3 h-3" />
-                    <span className="text-gray-300">{category}</span>
+                    <span className="text-purple-200">{category}</span>
                   </div>
                 )}
                 {playerCount && playerCount !== "any" && (
-                  <div className="flex items-center gap-1 text-gray-400 text-sm">
+                  <div className="flex items-center gap-1 text-purple-300 text-sm">
                     <Users className="w-3 h-3" />
-                    <span className="text-gray-300">{playerCount} players</span>
+                    <span className="text-purple-200">{playerCount} players</span>
                   </div>
                 )}
               </div>
@@ -388,8 +394,8 @@ export default function HomePage() {
       )}
 
       {/* Footer */}
-      <footer className="border-t border-gray-800 py-8 px-4">
-        <div className="container mx-auto text-center text-gray-400">
+      <footer className="border-t border-purple-800 py-8 px-4 bg-purple-900/30">
+        <div className="container mx-auto text-center text-purple-300">
           <p>Powered by BoardGameGeek API • Built with Next.js • ⚡ Enhanced with Smart Caching</p>
         </div>
       </footer>

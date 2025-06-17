@@ -3,15 +3,15 @@
 import { Card, CardContent } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Button } from "@/components/ui/button"
-import { RefreshCw, CheckCircle, AlertCircle, Clock } from "lucide-react"
+import { RefreshCw, CheckCircle, AlertCircle, Clock, Zap } from "lucide-react"
 
 interface PreloadStatusProps {
   isPreloading: boolean
   isPreloaded: boolean
   progress: number
   error: string | null
-  lastUpdated: number | null
-  cacheAge: number | null
+  lastUpdated: Date | null
+  cacheAge: number
   onRefresh: () => void
 }
 
@@ -24,61 +24,80 @@ export function PreloadStatus({
   cacheAge,
   onRefresh,
 }: PreloadStatusProps) {
-  const formatAge = (age: number | null) => {
-    if (!age) return "Never"
-    const minutes = Math.floor(age / (1000 * 60))
-    const hours = Math.floor(minutes / 60)
-
-    if (hours > 0) {
-      return `${hours}h ${minutes % 60}m ago`
-    }
-    return `${minutes}m ago`
+  const formatCacheAge = (ageInMs: number) => {
+    const ageInSeconds = Math.floor(ageInMs / 1000)
+    if (ageInSeconds < 60) return `${ageInSeconds}s ago`
+    if (ageInSeconds < 3600) return `${Math.floor(ageInSeconds / 60)}m ago`
+    return `${Math.floor(ageInSeconds / 3600)}h ago`
   }
 
-  const getStatusColor = () => {
-    if (error) return "text-red-400"
-    if (isPreloading) return "text-blue-400"
-    if (isPreloaded) return "text-green-400"
-    return "text-gray-400"
-  }
-
-  const getStatusIcon = () => {
-    if (error) return <AlertCircle className="w-4 h-4" />
-    if (isPreloading) return <RefreshCw className="w-4 h-4 animate-spin" />
-    if (isPreloaded) return <CheckCircle className="w-4 h-4" />
-    return <Clock className="w-4 h-4" />
-  }
-
-  const getStatusText = () => {
-    if (error) return `Error: ${error}`
-    if (isPreloading) return `Preloading collection... ${progress}%`
-    if (isPreloaded) return "Collection ready"
-    return "Collection not loaded"
-  }
-
-  return (
-    <Card className="bg-gray-800/50 border-gray-600">
-      <CardContent className="pt-4">
-        <div className="flex items-center justify-between">
+  if (error) {
+    return (
+      <Card className="mb-6 bg-red-900/30 border-red-700">
+        <CardContent className="pt-6">
           <div className="flex items-center gap-2">
-            <span className={getStatusColor()}>{getStatusIcon()}</span>
-            <span className={`text-sm ${getStatusColor()}`}>{getStatusText()}</span>
-          </div>
-
-          <div className="flex items-center gap-2">
-            {cacheAge !== null && <span className="text-xs text-gray-400">Updated {formatAge(cacheAge)}</span>}
-            <Button variant="ghost" size="sm" onClick={onRefresh} disabled={isPreloading} className="h-8 w-8 p-0">
-              <RefreshCw className={`w-3 h-3 ${isPreloading ? "animate-spin" : ""}`} />
+            <AlertCircle className="w-5 h-5 text-red-400" />
+            <span className="text-red-200">Failed to preload collection: {error}</span>
+            <Button
+              onClick={onRefresh}
+              size="sm"
+              variant="outline"
+              className="ml-auto bg-red-800/50 border-red-600 text-red-200 hover:bg-red-700/50"
+            >
+              <RefreshCw className="w-4 h-4 mr-1" />
+              Retry
             </Button>
           </div>
-        </div>
+        </CardContent>
+      </Card>
+    )
+  }
 
-        {isPreloading && (
-          <div className="mt-2">
-            <Progress value={progress} className="h-2" />
+  if (isPreloading) {
+    return (
+      <Card className="mb-6 bg-purple-800/30 border-purple-600">
+        <CardContent className="pt-6">
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <RefreshCw className="w-5 h-5 text-purple-300 animate-spin" />
+              <span className="text-purple-200">Preloading your collection...</span>
+            </div>
+            <Progress value={progress} className="w-full bg-purple-900/50" />
+            <p className="text-sm text-purple-300">{Math.round(progress)}% complete</p>
           </div>
-        )}
-      </CardContent>
-    </Card>
-  )
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (isPreloaded) {
+    return (
+      <Card className="mb-6 bg-green-900/30 border-green-700">
+        <CardContent className="pt-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <CheckCircle className="w-5 h-5 text-green-400" />
+              <span className="text-green-200">Collection cached</span>
+              <Zap className="w-4 h-4 text-yellow-400" />
+              <span className="text-purple-200 text-sm">
+                <Clock className="w-3 h-3 inline mr-1" />
+                {formatCacheAge(cacheAge)}
+              </span>
+            </div>
+            <Button
+              onClick={onRefresh}
+              size="sm"
+              variant="outline"
+              className="bg-green-800/50 border-green-600 text-green-200 hover:bg-green-700/50"
+            >
+              <RefreshCw className="w-4 h-4 mr-1" />
+              Refresh
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  return null
 }

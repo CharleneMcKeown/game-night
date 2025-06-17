@@ -30,7 +30,7 @@ export function GameCard({ game }: GameCardProps) {
     game.minPlayers === game.maxPlayers ? `${game.minPlayers}` : `${game.minPlayers}-${game.maxPlayers}`
 
   return (
-    <Card className="bg-gray-800 border-gray-600 hover:border-gray-500 transition-colors overflow-hidden">
+    <Card className="bg-purple-900/40 border-purple-700 hover:border-purple-500 transition-colors overflow-hidden backdrop-blur-sm">
       <div className="aspect-square relative">
         <Image
           src={game.image || "/placeholder.svg?height=300&width=300&query=board game"}
@@ -40,13 +40,13 @@ export function GameCard({ game }: GameCardProps) {
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
         />
         {game.rank && game.rank <= 1000 && (
-          <Badge className="absolute top-2 left-2 bg-yellow-600 hover:bg-yellow-700">#{game.rank}</Badge>
+          <Badge className="absolute top-2 left-2 bg-yellow-600 hover:bg-yellow-700 text-white">#{game.rank}</Badge>
         )}
       </div>
 
       <CardHeader className="pb-3">
-        <CardTitle className="text-lg leading-tight text-gray-100">{game.name}</CardTitle>
-        <CardDescription className="flex items-center gap-4 text-sm text-gray-300">
+        <CardTitle className="text-lg leading-tight text-white">{game.name}</CardTitle>
+        <CardDescription className="flex items-center gap-4 text-sm text-purple-200">
           <div className="flex items-center gap-1">
             <Calendar className="w-4 h-4" />
             {game.yearPublished}
@@ -61,7 +61,7 @@ export function GameCard({ game }: GameCardProps) {
       </CardHeader>
 
       <CardContent className="space-y-4">
-        <div className="flex items-center justify-between text-sm text-gray-300">
+        <div className="flex items-center justify-between text-sm text-purple-200">
           <div className="flex items-center gap-1">
             <Users className="w-4 h-4" />
             {playerRange} players
@@ -73,7 +73,7 @@ export function GameCard({ game }: GameCardProps) {
         </div>
 
         {game.description && (
-          <p className="text-sm text-gray-200 line-clamp-3">
+          <p className="text-sm text-purple-100 line-clamp-3">
             {game.description.replace(/<[^>]*>/g, "").substring(0, 150)}...
           </p>
         )}
@@ -85,7 +85,7 @@ export function GameCard({ game }: GameCardProps) {
               <Badge
                 key={category}
                 variant="outline"
-                className="text-xs bg-blue-900/30 border-blue-700 text-blue-200 hover:bg-blue-800/30"
+                className="text-xs bg-purple-700/50 border-purple-500 text-purple-100 hover:bg-purple-600/50"
               >
                 <Tag className="w-3 h-3 mr-1" />
                 {category}
@@ -94,7 +94,7 @@ export function GameCard({ game }: GameCardProps) {
             {game.categories.length > 2 && (
               <Badge
                 variant="outline"
-                className="text-xs bg-blue-900/30 border-blue-700 text-blue-200 hover:bg-blue-800/30"
+                className="text-xs bg-purple-700/50 border-purple-500 text-purple-100 hover:bg-purple-600/50"
               >
                 +{game.categories.length - 2} more
               </Badge>
@@ -109,20 +109,23 @@ export function GameCard({ game }: GameCardProps) {
               <Badge
                 key={mechanism}
                 variant="secondary"
-                className="text-xs bg-gray-600 text-gray-200 hover:bg-gray-500"
+                className="text-xs bg-purple-800/50 text-purple-100 hover:bg-purple-700/50 border-purple-600"
               >
                 {mechanism}
               </Badge>
             ))}
             {game.mechanisms.length > 2 && (
-              <Badge variant="secondary" className="text-xs bg-gray-600 text-gray-200 hover:bg-gray-500">
+              <Badge
+                variant="secondary"
+                className="text-xs bg-purple-800/50 text-purple-100 hover:bg-purple-700/50 border-purple-600"
+              >
                 +{game.mechanisms.length - 2} more
               </Badge>
             )}
           </div>
         )}
 
-        <Button asChild className="w-full bg-blue-600 hover:bg-blue-700">
+        <Button asChild className="w-full bg-purple-600 hover:bg-purple-700 text-white border-0">
           <a href={game.bggUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
             <ExternalLink className="w-4 h-4" />
             View on BGG
