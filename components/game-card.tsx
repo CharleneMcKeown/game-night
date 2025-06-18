@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { ExternalLink, Star, Users, Clock, Calendar, Tag } from "lucide-react"
+import { ExternalLink, Star, Users, Clock, Calendar, Tag, Cog } from "lucide-react"
 import Image from "next/image"
 
 interface Game {
@@ -16,6 +16,7 @@ interface Game {
   playingTime: number
   rating: number
   rank: number
+  weight: number
   mechanisms: string[]
   categories: string[]
   bggUrl: string
@@ -70,6 +71,12 @@ export function GameCard({ game }: GameCardProps) {
             <Clock className="w-4 h-4" />
             {game.playingTime}min
           </div>
+          {game.weight > 0 && (
+            <div className="flex items-center gap-1">
+              <Cog className="w-4 h-4" />
+              {game.weight.toFixed(1)}
+            </div>
+          )}
         </div>
 
         {game.description && (

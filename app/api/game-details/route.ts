@@ -35,6 +35,56 @@ async function fetchWithRetry(url: string, retries = 3): Promise<Response> {
   throw new Error("Max retries exceeded")
 }
 
+function isExpansion(item: any): boolean {
+  // Check if it's marked as an expansion by type
+  if (item["@_type"] === "boardgameexpansion") {
+    return true
+  }
+
+  // Check categories for expansion indicators
+  const categories: string[] = []
+  if (item.link) {
+    const links = Array.isArray(item.link) ? item.link : [item.link]
+    links.forEach((link: any) => {
+      if (link["@_type"] === "boardgamecategory") {
+        categories.push(link["@_value"])
+      }
+    })
+  }
+
+  // Check for expansion-related categories
+  const expansionCategories = ["Expansion for Base-game", "Game System", "Collectible Components"]
+
+  const hasExpansionCategory = categories.some((category) =>
+    expansionCategories.some((expCat) => category.toLowerCase().includes(expCat.toLowerCase())),
+  )
+
+  if (hasExpansionCategory) {
+    return true
+  }
+
+  // Check name for expansion keywords
+  const name = Array.isArray(item.name)
+    ? item.name.find((n: any) => n["@_type"] === "primary")?.["@_value"] || item.name[0]["@_value"]
+    : item.name?.["@_value"] || ""
+
+  const expansionKeywords = [
+    ": expansion",
+    ": extend",
+    ": extension",
+    "add-on",
+    "addon",
+    "mini expansion",
+    "promo pack",
+    "booster",
+    "supplement",
+  ]
+
+  const nameIndicatesExpansion = expansionKeywords.some((keyword) => name.toLowerCase().includes(keyword.toLowerCase()))
+
+  return nameIndicatesExpansion
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { gameIds } = await request.json()
@@ -45,6 +95,7 @@ export async function POST(request: NextRequest) {
 
     const batchSize = 20
     const allGames: any[] = []
+    let filteredExpansions = 0
 
     for (let i = 0; i < gameIds.length; i += batchSize) {
       const batch = gameIds.slice(i, i + batchSize)
@@ -61,51 +112,65 @@ export async function POST(request: NextRequest) {
 
         const items = Array.isArray(data.items.item) ? data.items.item : [data.items.item]
 
-        const batchGames = items.map((item: any) => {
-          const name = Array.isArray(item.name)
-            ? item.name.find((n: any) => n["@_type"] === "primary")?.["@_value"] || item.name[0]["@_value"]
-            : item.name?.["@_value"] || "Unknown"
+        const batchGames = items
+          .filter((item: any) => {
+            // Filter out expansions at the detail level as well
+            if (isExpansion(item)) {
+              filteredExpansions++
+              return false
+            }
+            return true
+          })
+          .map((item: any) => {
+            const name = Array.isArray(item.name)
+              ? item.name.find((n: any) => n["@_type"] === "primary")?.["@_value"] || item.name[0]["@_value"]
+              : item.name?.["@_value"] || "Unknown"
 
-          const mechanisms: string[] = []
-          const categories: string[] = []
-          if (item.link) {
-            const links = Array.isArray(item.link) ? item.link : [item.link]
-            links.forEach((link: any) => {
-              if (link["@_type"] === "boardgamemechanic") {
-                mechanisms.push(link["@_value"])
-              } else if (link["@_type"] === "boardgamecategory") {
-                categories.push(link["@_value"])
-              }
-            })
-          }
+            const mechanisms: string[] = []
+            const categories: string[] = []
+            if (item.link) {
+              const links = Array.isArray(item.link) ? item.link : [item.link]
+              links.forEach((link: any) => {
+                if (link["@_type"] === "boardgamemechanic") {
+                  mechanisms.push(link["@_value"])
+                } else if (link["@_type"] === "boardgamecategory") {
+                  categories.push(link["@_value"])
+                }
+              })
+            }
 
-          const rating = item.statistics?.ratings?.average?.["@_value"]
-            ? Number.parseFloat(item.statistics.ratings.average["@_value"])
-            : 0
+            const rating = item.statistics?.ratings?.average?.["@_value"]
+              ? Number.parseFloat(item.statistics.ratings.average["@_value"])
+              : 0
 
-          const rank = item.statistics?.ratings?.ranks?.rank
-            ? Array.isArray(item.statistics.ratings.ranks.rank)
-              ? item.statistics.ratings.ranks.rank.find((r: any) => r["@_name"] === "boardgame")?.["@_value"]
-              : item.statistics.ratings.ranks.rank["@_value"]
-            : null
+            const rank = item.statistics?.ratings?.ranks?.rank
+              ? Array.isArray(item.statistics.ratings.ranks.rank)
+                ? item.statistics.ratings.ranks.rank.find((r: any) => r["@_name"] === "boardgame")?.["@_value"]
+                : item.statistics.ratings.ranks.rank["@_value"]
+              : null
 
-          return {
-            id: item["@_id"],
-            name,
-            image: item.image || "",
-            thumbnail: item.thumbnail || "",
-            description: item.description || "",
-            yearPublished: item.yearpublished?.["@_value"] || "",
-            minPlayers: Number.parseInt(item.minplayers?.["@_value"] || "1"),
-            maxPlayers: Number.parseInt(item.maxplayers?.["@_value"] || "1"),
-            playingTime: Number.parseInt(item.playingtime?.["@_value"] || "0"),
-            rating,
-            rank: rank && rank !== "Not Ranked" ? Number.parseInt(rank) : 0,
-            mechanisms,
-            categories,
-            bggUrl: `https://boardgamegeek.com/boardgame/${item["@_id"]}`,
-          }
-        })
+            const weight = item.statistics?.ratings?.averageweight?.["@_value"]
+              ? Number.parseFloat(item.statistics.ratings.averageweight["@_value"])
+              : 0
+
+            return {
+              id: item["@_id"],
+              name,
+              image: item.image || "",
+              thumbnail: item.thumbnail || "",
+              description: item.description || "",
+              yearPublished: item.yearpublished?.["@_value"] || "",
+              minPlayers: Number.parseInt(item.minplayers?.["@_value"] || "1"),
+              maxPlayers: Number.parseInt(item.maxplayers?.["@_value"] || "1"),
+              playingTime: Number.parseInt(item.playingtime?.["@_value"] || "0"),
+              rating,
+              rank: rank && rank !== "Not Ranked" ? Number.parseInt(rank) : 0,
+              weight,
+              mechanisms,
+              categories,
+              bggUrl: `https://boardgamegeek.com/boardgame/${item["@_id"]}`,
+            }
+          })
 
         allGames.push(...batchGames)
 
@@ -118,6 +183,8 @@ export async function POST(request: NextRequest) {
         continue
       }
     }
+
+    console.log(`Game details processed: ${allGames.length} base games, filtered out ${filteredExpansions} expansions`)
 
     return NextResponse.json(allGames)
   } catch (error) {
