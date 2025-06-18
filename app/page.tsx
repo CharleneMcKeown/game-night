@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Loader2, Search, Users, Cog, Bug, Tag, Zap } from "lucide-react"
+import { Loader2, Search, Users, Cog, Bug, Tag, Zap, Clock } from "lucide-react"
 import { GameCard } from "@/components/game-card"
 import { MechanismCombobox } from "@/components/mechanism-combobox"
 import { CategoryCombobox } from "@/components/category-combobox"
@@ -30,6 +30,7 @@ interface Game {
   mechanisms: string[]
   categories: string[]
   bggUrl: string
+  weight?: number
 }
 
 const PLAYER_COUNTS = [
@@ -42,11 +43,30 @@ const PLAYER_COUNTS = [
   { value: "any", label: "Any Player Count" },
 ]
 
+const COMPLEXITY_RANGES = [
+  { value: "1-2", label: "Light (1.0-2.0)" },
+  { value: "2-3", label: "Medium Light (2.0-3.0)" },
+  { value: "3-4", label: "Medium Heavy (3.0-4.0)" },
+  { value: "4-5", label: "Heavy (4.0-5.0)" },
+  { value: "any", label: "Any Complexity" },
+]
+
+const GAME_LENGTH_RANGES = [
+  { value: "0-30", label: "Quick (≤30 min)" },
+  { value: "30-60", label: "Short (30-60 min)" },
+  { value: "60-120", label: "Medium (1-2 hours)" },
+  { value: "120-180", label: "Long (2-3 hours)" },
+  { value: "180-999", label: "Epic (3+ hours)" },
+  { value: "any", label: "Any Length" },
+]
+
 export default function HomePage() {
   const [username, setUsername] = useState("")
   const [mechanism, setMechanism] = useState("")
   const [category, setCategory] = useState("")
   const [playerCount, setPlayerCount] = useState("")
+  const [complexity, setComplexity] = useState("")
+  const [gameLength, setGameLength] = useState("")
   const [games, setGames] = useState<Game[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
@@ -83,6 +103,8 @@ export default function HomePage() {
       if (mechanism) params.append("mechanism", mechanism)
       if (category) params.append("category", category)
       if (playerCount && playerCount !== "any") params.append("playerCount", playerCount)
+      if (complexity && complexity !== "any") params.append("complexity", complexity)
+      if (gameLength && gameLength !== "any") params.append("gameLength", gameLength)
 
       // Try to use cached data first
       const cachedGames = getCachedCollection()
@@ -109,6 +131,22 @@ export default function HomePage() {
           filteredGames = filteredGames.filter((game) => game.minPlayers <= count && game.maxPlayers >= count)
         }
 
+        if (complexity && complexity !== "any") {
+          const [min, max] = complexity.split("-").map(Number)
+          filteredGames = filteredGames.filter((game) => {
+            const weight = game.weight || 0
+            return weight >= min && weight <= max
+          })
+        }
+
+        if (gameLength && gameLength !== "any") {
+          const [min, max] = gameLength.split("-").map(Number)
+          filteredGames = filteredGames.filter((game) => {
+            const playTime = game.playingTime || 0
+            return playTime >= min && playTime <= max
+          })
+        }
+
         // Sort by rating and limit results
         filteredGames = filteredGames
           .filter((game) => game.rating > 0)
@@ -119,7 +157,7 @@ export default function HomePage() {
         setDebugInfo({
           totalInCollection: cachedGames.length,
           afterFiltering: filteredGames.length,
-          filters: { mechanism, category, playerCount },
+          filters: { mechanism, category, playerCount, complexity, gameLength },
           cached: true,
           responseTime: "< 1ms (cached)",
         })
@@ -218,7 +256,7 @@ export default function HomePage() {
           </p>
 
           {/* Search Form */}
-          <Card className="bg-purple-900/30 border-purple-700 max-w-3xl mx-auto backdrop-blur-sm">
+          <Card className="bg-purple-900/30 border-purple-700 max-w-4xl mx-auto backdrop-blur-sm">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-white">
                 <Search className="w-5 h-5" />
@@ -255,22 +293,22 @@ export default function HomePage() {
                   />
                 )}
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                   <div className="space-y-2">
-                    <Label className="text-white">Preferred Mechanism</Label>
+                    <Label className="text-white">Mechanism</Label>
                     <MechanismCombobox value={mechanism} onValueChange={setMechanism} />
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-white">Category/Theme</Label>
+                    <Label className="text-white">Category</Label>
                     <CategoryCombobox value={category} onValueChange={setCategory} />
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-white">Player Count</Label>
+                    <Label className="text-white">Players</Label>
                     <Select value={playerCount} onValueChange={setPlayerCount}>
                       <SelectTrigger className="bg-purple-800/50 border-purple-600 text-white">
-                        <SelectValue placeholder="Select player count" />
+                        <SelectValue placeholder="Player count" />
                       </SelectTrigger>
                       <SelectContent className="bg-purple-900 border-purple-700">
                         {PLAYER_COUNTS.map((count) => (
@@ -278,6 +316,44 @@ export default function HomePage() {
                             <div className="flex items-center gap-2">
                               <Users className="w-4 h-4" />
                               {count.label}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-white">Complexity</Label>
+                    <Select value={complexity} onValueChange={setComplexity}>
+                      <SelectTrigger className="bg-purple-800/50 border-purple-600 text-white">
+                        <SelectValue placeholder="Complexity" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-purple-900 border-purple-700">
+                        {COMPLEXITY_RANGES.map((range) => (
+                          <SelectItem key={range.value} value={range.value} className="text-white focus:bg-purple-800">
+                            <div className="flex items-center gap-2">
+                              <Cog className="w-4 h-4" />
+                              {range.label}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-white">Game Length</Label>
+                    <Select value={gameLength} onValueChange={setGameLength}>
+                      <SelectTrigger className="bg-purple-800/50 border-purple-600 text-white">
+                        <SelectValue placeholder="Game length" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-purple-900 border-purple-700">
+                        {GAME_LENGTH_RANGES.map((range) => (
+                          <SelectItem key={range.value} value={range.value} className="text-white focus:bg-purple-800">
+                            <div className="flex items-center gap-2">
+                              <Clock className="w-4 h-4" />
+                              {range.label}
                             </div>
                           </SelectItem>
                         ))}
@@ -379,6 +455,22 @@ export default function HomePage() {
                   <div className="flex items-center gap-1 text-purple-300 text-sm">
                     <Users className="w-3 h-3" />
                     <span className="text-purple-200">{playerCount} players</span>
+                  </div>
+                )}
+                {complexity && complexity !== "any" && (
+                  <div className="flex items-center gap-1 text-purple-300 text-sm">
+                    <Cog className="w-3 h-3" />
+                    <span className="text-purple-200">
+                      {COMPLEXITY_RANGES.find((r) => r.value === complexity)?.label || complexity}
+                    </span>
+                  </div>
+                )}
+                {gameLength && gameLength !== "any" && (
+                  <div className="flex items-center gap-1 text-purple-300 text-sm">
+                    <Clock className="w-3 h-3" />
+                    <span className="text-purple-200">
+                      {GAME_LENGTH_RANGES.find((r) => r.value === gameLength)?.label || gameLength}
+                    </span>
                   </div>
                 )}
               </div>
