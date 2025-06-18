@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Loader2, Search, Users, Cog, Bug, Tag, Zap, Clock } from "lucide-react"
+import { Loader2, Search, Users, Cog, Tag, Zap, Clock } from "lucide-react"
 import { GameCard } from "@/components/game-card"
 import { MechanismCombobox } from "@/components/mechanism-combobox"
 import { CategoryCombobox } from "@/components/category-combobox"
@@ -189,41 +189,6 @@ export default function HomePage() {
     }
   }
 
-  const handleTestCollection = async () => {
-    if (!username.trim()) {
-      setError("Please enter your BGG username to test")
-      return
-    }
-
-    setLoading(true)
-    setError("")
-
-    try {
-      const response = await fetch(`/api/test-collection?username=${encodeURIComponent(username)}`)
-      const data = await response.json()
-
-      console.log("Test results:", data)
-
-      const successfulResult = data.results?.find((r: any) => r.status === 200 && r.responseLength > 100)
-
-      if (successfulResult) {
-        setError(`✅ Collection found! ${successfulResult.responseLength} characters returned from BGG.`)
-      } else {
-        setError(
-          `❌ Could not fetch collection. Check console for details. Results: ${JSON.stringify(
-            data.results?.map((r: any) => ({ endpoint: r.endpoint, status: r.status, error: r.error })),
-            null,
-            2,
-          )}`,
-        )
-      }
-    } catch (err) {
-      setError(`Test failed: ${err instanceof Error ? err.message : "Unknown error"}`)
-    } finally {
-      setLoading(false)
-    }
-  }
-
   return (
     <div className="min-h-screen bg-purple-950 text-white">
       {/* Header */}
@@ -362,36 +327,24 @@ export default function HomePage() {
                   </div>
                 </div>
 
-                <div className="flex gap-2">
-                  <Button
-                    type="submit"
-                    className="flex-1 bg-white text-purple-900 hover:bg-purple-100"
-                    disabled={loading}
-                  >
-                    {loading ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Finding Games...
-                      </>
-                    ) : (
-                      <>
-                        <Search className="w-4 h-4 mr-2" />
-                        Get Recommendations
-                        {isPreloaded && <Zap className="w-3 h-3 ml-1" />}
-                      </>
-                    )}
-                  </Button>
-
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleTestCollection}
-                    disabled={loading}
-                    className="bg-purple-800/50 border-purple-600 text-white hover:bg-purple-700/50"
-                  >
-                    <Bug className="w-4 h-4" />
-                  </Button>
-                </div>
+                <Button
+                  type="submit"
+                  className="w-full bg-white text-purple-900 hover:bg-purple-100"
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Finding Games...
+                    </>
+                  ) : (
+                    <>
+                      <Search className="w-4 h-4 mr-2" />
+                      Get Recommendations
+                      {isPreloaded && <Zap className="w-3 h-3 ml-1" />}
+                    </>
+                  )}
+                </Button>
               </form>
             </CardContent>
           </Card>
