@@ -274,7 +274,7 @@ export default function HomePage() {
                   />
                 )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
                   <div className="space-y-2">
                     <Label className="text-white">Mechanism</Label>
                     <MechanismCombobox value={mechanism} onValueChange={setMechanism} />
@@ -305,10 +305,7 @@ export default function HomePage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-white flex items-center gap-1">
-                      <Star className="w-3 h-3 text-yellow-400" />
-                      Best At
-                    </Label>
+                    <Label className="text-white">Best At</Label>
                     <BestPlayerCountCombobox value={bestPlayerCount} onValueChange={setBestPlayerCount} />
                   </div>
 
