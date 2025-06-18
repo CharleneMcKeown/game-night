@@ -19,6 +19,7 @@ interface Game {
   weight: number
   mechanisms: string[]
   categories: string[]
+  bestPlayerCounts: number[]
   bggUrl: string
 }
 
@@ -30,6 +31,32 @@ export function GameCard({ game }: GameCardProps) {
   const playerRange =
     game.minPlayers === game.maxPlayers ? `${game.minPlayers}` : `${game.minPlayers}-${game.maxPlayers}`
 
+  const formatBestPlayerCounts = (counts: number[]) => {
+    if (!counts || counts.length === 0) return null
+
+    // Sort and format the counts
+    const sortedCounts = [...counts].sort((a, b) => a - b)
+
+    // Group consecutive numbers
+    const groups: string[] = []
+    let start = sortedCounts[0]
+    let end = sortedCounts[0]
+
+    for (let i = 1; i < sortedCounts.length; i++) {
+      if (sortedCounts[i] === end + 1) {
+        end = sortedCounts[i]
+      } else {
+        groups.push(start === end ? `${start}` : `${start}-${end}`)
+        start = end = sortedCounts[i]
+      }
+    }
+    groups.push(start === end ? `${start}` : `${start}-${end}`)
+
+    return groups.join(", ")
+  }
+
+  const bestPlayerCountsText = formatBestPlayerCounts(game.bestPlayerCounts)
+
   return (
     <Card className="bg-purple-900/40 border-purple-700 hover:border-purple-500 transition-colors overflow-hidden backdrop-blur-sm">
       <div className="aspect-square relative">
@@ -40,8 +67,14 @@ export function GameCard({ game }: GameCardProps) {
           className="object-cover"
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
         />
-        {game.rank && game.rank <= 1000 && (
+        {game.rank && game.rank > 0 && (
           <Badge className="absolute top-2 left-2 bg-yellow-600 hover:bg-yellow-700 text-white">#{game.rank}</Badge>
+        )}
+        {bestPlayerCountsText && (
+          <Badge className="absolute top-2 right-2 bg-green-600 hover:bg-green-700 text-white flex items-center gap-1">
+            <Star className="w-3 h-3" />
+            {bestPlayerCountsText}
+          </Badge>
         )}
       </div>
 
@@ -78,6 +111,13 @@ export function GameCard({ game }: GameCardProps) {
             </div>
           )}
         </div>
+
+        {bestPlayerCountsText && (
+          <div className="flex items-center gap-2 text-sm">
+            <Star className="w-4 h-4 text-yellow-400" />
+            <span className="text-purple-200">Best at: {bestPlayerCountsText} players</span>
+          </div>
+        )}
 
         {game.description && (
           <p className="text-sm text-purple-100 line-clamp-3">
