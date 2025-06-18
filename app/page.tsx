@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Loader2, Search, Users, Cog, Tag, Zap, Clock, Star, Dice1Icon as Dice } from "lucide-react"
+import { Loader2, Search, Users, Cog, Tag, Zap, Clock, Star, Dices } from "lucide-react"
 import { GameCard } from "@/components/game-card"
 import { MechanismCombobox } from "@/components/mechanism-combobox"
 import { CategoryCombobox } from "@/components/category-combobox"
@@ -212,7 +212,7 @@ export default function HomePage() {
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center space-x-2">
             <div className="w-8 h-8 bg-white rounded-sm flex items-center justify-center">
-              <Dice className="w-5 h-5 text-purple-900" />
+              <Dices className="w-5 h-5 text-purple-900" />
             </div>
             <h1 className="text-2xl font-bold text-white">Off the Shelf</h1>
             <div className="flex items-center gap-1 text-xs bg-purple-600 text-white px-2 py-1 rounded">
