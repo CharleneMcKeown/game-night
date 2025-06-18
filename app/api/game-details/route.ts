@@ -156,6 +156,41 @@ function isBestPlayerCount(result: any): boolean {
   return bestVotes >= recommendedVotes && bestVotes >= notRecommendedVotes && totalPositive >= notRecommendedVotes * 1.5
 }
 
+function parseRank(item: any): number {
+  if (!item.statistics?.ratings?.ranks?.rank) return 0
+
+  const ranks = item.statistics.ratings.ranks.rank
+
+  // Handle both single rank and array of ranks
+  if (Array.isArray(ranks)) {
+    // Look for the overall boardgame rank
+    const boardgameRank = ranks.find(
+      (rank: any) => rank["@_name"] === "boardgame" || rank["@_type"] === "subtype" || rank["@_id"] === "1", // BGG's boardgame subtype ID is 1
+    )
+
+    if (boardgameRank && boardgameRank["@_value"] && boardgameRank["@_value"] !== "Not Ranked") {
+      const rankValue = Number.parseInt(boardgameRank["@_value"])
+      return isNaN(rankValue) ? 0 : rankValue
+    }
+
+    // Fallback: try to find any rank that's not "Not Ranked"
+    for (const rank of ranks) {
+      if (rank["@_value"] && rank["@_value"] !== "Not Ranked") {
+        const rankValue = Number.parseInt(rank["@_value"])
+        if (!isNaN(rankValue)) return rankValue
+      }
+    }
+  } else {
+    // Single rank object
+    if (ranks["@_value"] && ranks["@_value"] !== "Not Ranked") {
+      const rankValue = Number.parseInt(ranks["@_value"])
+      return isNaN(rankValue) ? 0 : rankValue
+    }
+  }
+
+  return 0
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { gameIds } = await request.json()
@@ -214,11 +249,8 @@ export async function POST(request: NextRequest) {
               ? Number.parseFloat(item.statistics.ratings.average["@_value"])
               : 0
 
-            const rank = item.statistics?.ratings?.ranks?.rank
-              ? Array.isArray(item.statistics.ratings.ranks.rank)
-                ? item.statistics.ratings.ranks.rank.find((r: any) => r["@_name"] === "boardgame")?.["@_value"]
-                : item.statistics.ratings.ranks.rank["@_value"]
-              : null
+            // Use the improved rank parsing function
+            const rank = parseRank(item)
 
             const weight = item.statistics?.ratings?.averageweight?.["@_value"]
               ? Number.parseFloat(item.statistics.ratings.averageweight["@_value"])
@@ -226,6 +258,17 @@ export async function POST(request: NextRequest) {
 
             // Parse best player counts from community poll
             const bestPlayerCounts = parseBestPlayerCounts(item)
+
+            // Debug logging for rank parsing
+            if (item["@_id"] === "419704") {
+              // Phoenix New Horizon ID
+              console.log("Phoenix New Horizon rank debug:", {
+                id: item["@_id"],
+                name,
+                rawRanks: item.statistics?.ratings?.ranks?.rank,
+                parsedRank: rank,
+              })
+            }
 
             return {
               id: item["@_id"],
@@ -238,7 +281,7 @@ export async function POST(request: NextRequest) {
               maxPlayers: Number.parseInt(item.maxplayers?.["@_value"] || "1"),
               playingTime: Number.parseInt(item.playingtime?.["@_value"] || "0"),
               rating,
-              rank: rank && rank !== "Not Ranked" ? Number.parseInt(rank) : 0,
+              rank,
               weight,
               mechanisms,
               categories,
