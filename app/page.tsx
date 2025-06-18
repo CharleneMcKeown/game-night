@@ -233,7 +233,10 @@ export default function HomePage() {
         <div className="container mx-auto max-w-4xl text-center">
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-black mb-8 text-center leading-tight">
             <span className="block text-white mb-2">No more</span>
-            <span className="block bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 bg-clip-text text-transparent pb-1 leading-relaxed">
+            <span
+              className="block bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 bg-clip-text text-transparent leading-relaxed"
+              style={{ paddingBottom: "2px" }}
+            >
               decision fatigue
             </span>
             <span className="block text-purple-200 text-2xl md:text-3xl lg:text-4xl font-bold mt-4">
