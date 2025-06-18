@@ -44,9 +44,10 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    // Only fetch base games, not expansions
     const collectionEndpoints = [
+      `https://boardgamegeek.com/xmlapi2/collection?username=${encodeURIComponent(username)}&own=1&subtype=boardgame&excludesubtype=boardgameexpansion`,
       `https://boardgamegeek.com/xmlapi2/collection?username=${encodeURIComponent(username)}&own=1&subtype=boardgame`,
-      `https://boardgamegeek.com/xmlapi2/collection?username=${encodeURIComponent(username)}&own=1`,
       `https://boardgamegeek.com/xmlapi2/collection?username=${encodeURIComponent(username)}&subtype=boardgame`,
     ]
 
@@ -75,11 +76,45 @@ export async function GET(request: NextRequest) {
       items = Array.isArray(collectionData.items.item) ? collectionData.items.item : [collectionData.items.item]
     }
 
-    const gameIds = items.map((item: any) => item["@_objectid"]).filter(Boolean)
+    // Filter out expansions at the collection level
+    const baseGameItems = items.filter((item: any) => {
+      // Check if subtype is boardgameexpansion
+      if (item["@_subtype"] === "boardgameexpansion") {
+        return false
+      }
+
+      // Additional check for expansion indicators in the name
+      const name = item.name?.["#text"] || item.name || ""
+      const expansionKeywords = [
+        "expansion",
+        "extend",
+        "extension",
+        "add-on",
+        "addon",
+        "supplement",
+        "booster",
+        "promo",
+        "mini expansion",
+      ]
+
+      const nameContainsExpansion = expansionKeywords.some((keyword) =>
+        name.toLowerCase().includes(keyword.toLowerCase()),
+      )
+
+      return !nameContainsExpansion
+    })
+
+    const gameIds = baseGameItems.map((item: any) => item["@_objectid"]).filter(Boolean)
+
+    console.log(
+      `Filtered collection: ${items.length} total items, ${gameIds.length} base games (filtered out ${items.length - gameIds.length} expansions)`,
+    )
 
     return NextResponse.json({
       gameIds,
       totalGames: gameIds.length,
+      totalItems: items.length,
+      filteredExpansions: items.length - gameIds.length,
       timestamp: Date.now(),
     })
   } catch (error) {
