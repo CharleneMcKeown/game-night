@@ -26,9 +26,10 @@ export async function GET(request: NextRequest) {
   const playerCount = searchParams.get("playerCount")
   const useCache = searchParams.get("useCache") !== "false"
   const complexity = searchParams.get("complexity")
+  const gameLength = searchParams.get("gameLength")
 
   console.log("=== Fast Recommendations Request ===")
-  console.log("Params:", { username, mechanism, category, playerCount, useCache, complexity })
+  console.log("Params:", { username, mechanism, category, playerCount, useCache, complexity, gameLength })
 
   if (!username) {
     return NextResponse.json({ error: "BGG username is required" }, { status: 400 })
@@ -93,6 +94,14 @@ export async function GET(request: NextRequest) {
       })
     }
 
+    if (gameLength && gameLength !== "any") {
+      const [min, max] = gameLength.split("-").map(Number)
+      filteredGames = filteredGames.filter((game) => {
+        const playTime = game.playingTime || 0
+        return playTime >= min && playTime <= max
+      })
+    }
+
     // Sort by rating and limit results
     filteredGames = filteredGames
       .filter((game) => game.rating > 0)
@@ -105,7 +114,7 @@ export async function GET(request: NextRequest) {
       debug: {
         totalInCollection: games.length,
         afterFiltering: filteredGames.length,
-        filters: { mechanism, category, playerCount, complexity },
+        filters: { mechanism, category, playerCount, complexity, gameLength },
         cached: useCache && games.length > 0,
       },
     })
