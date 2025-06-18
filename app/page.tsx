@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Loader2, Search, Users, Cog, Tag, Zap, Clock, Star } from "lucide-react"
+import { Loader2, Search, Users, Cog, Tag, Zap, Clock, Star, Dice1Icon as Dice } from "lucide-react"
 import { GameCard } from "@/components/game-card"
 import { MechanismCombobox } from "@/components/mechanism-combobox"
 import { CategoryCombobox } from "@/components/category-combobox"
@@ -212,9 +212,9 @@ export default function HomePage() {
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center space-x-2">
             <div className="w-8 h-8 bg-white rounded-sm flex items-center justify-center">
-              <Cog className="w-5 h-5 text-purple-900" />
+              <Dice className="w-5 h-5 text-purple-900" />
             </div>
-            <h1 className="text-2xl font-bold text-white">BGG Recommender</h1>
+            <h1 className="text-2xl font-bold text-white">Off the Shelf</h1>
             <div className="flex items-center gap-1 text-xs bg-purple-600 text-white px-2 py-1 rounded">
               <Zap className="w-3 h-3" />
               FAST
@@ -227,10 +227,11 @@ export default function HomePage() {
       <section className="py-20 px-4">
         <div className="container mx-auto max-w-4xl text-center">
           <h2 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-white to-purple-200 bg-clip-text text-transparent">
-            Find Games to Play from Your Collection
+            No more decision fatigue - we'll pick the game, you bring the snacks.
           </h2>
           <p className="text-xl text-purple-200 mb-12 max-w-2xl mx-auto">
-            Discover games from your BoardGameGeek collection that match your current mood and player count.
+            Smart suggestions from your BoardGameGeek collection - tailored to your mood, group, time, complexity, and
+            mechanics.
             <span className="block text-sm text-purple-300 mt-2">
               ⚡ Now with instant recommendations via smart caching
             </span>
