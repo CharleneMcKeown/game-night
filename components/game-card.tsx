@@ -67,7 +67,7 @@ export function GameCard({ game }: GameCardProps) {
           className="object-cover"
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
         />
-        {game.rank && game.rank <= 1000 && (
+        {game.rank && game.rank > 0 && (
           <Badge className="absolute top-2 left-2 bg-yellow-600 hover:bg-yellow-700 text-white">#{game.rank}</Badge>
         )}
         {bestPlayerCountsText && (
