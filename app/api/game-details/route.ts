@@ -89,6 +89,10 @@ export async function POST(request: NextRequest) {
               : item.statistics.ratings.ranks.rank["@_value"]
             : null
 
+          const weight = item.statistics?.ratings?.averageweight?.["@_value"]
+            ? Number.parseFloat(item.statistics.ratings.averageweight["@_value"])
+            : 0
+
           return {
             id: item["@_id"],
             name,
@@ -101,6 +105,7 @@ export async function POST(request: NextRequest) {
             playingTime: Number.parseInt(item.playingtime?.["@_value"] || "0"),
             rating,
             rank: rank && rank !== "Not Ranked" ? Number.parseInt(rank) : 0,
+            weight,
             mechanisms,
             categories,
             bggUrl: `https://boardgamegeek.com/boardgame/${item["@_id"]}`,

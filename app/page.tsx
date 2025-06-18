@@ -30,6 +30,7 @@ interface Game {
   mechanisms: string[]
   categories: string[]
   bggUrl: string
+  weight?: number
 }
 
 const PLAYER_COUNTS = [
@@ -42,11 +43,20 @@ const PLAYER_COUNTS = [
   { value: "any", label: "Any Player Count" },
 ]
 
+const COMPLEXITY_RANGES = [
+  { value: "1-2", label: "Light (1.0-2.0)" },
+  { value: "2-3", label: "Medium Light (2.0-3.0)" },
+  { value: "3-4", label: "Medium Heavy (3.0-4.0)" },
+  { value: "4-5", label: "Heavy (4.0-5.0)" },
+  { value: "any", label: "Any Complexity" },
+]
+
 export default function HomePage() {
   const [username, setUsername] = useState("")
   const [mechanism, setMechanism] = useState("")
   const [category, setCategory] = useState("")
   const [playerCount, setPlayerCount] = useState("")
+  const [complexity, setComplexity] = useState("")
   const [games, setGames] = useState<Game[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
@@ -83,6 +93,7 @@ export default function HomePage() {
       if (mechanism) params.append("mechanism", mechanism)
       if (category) params.append("category", category)
       if (playerCount && playerCount !== "any") params.append("playerCount", playerCount)
+      if (complexity && complexity !== "any") params.append("complexity", complexity)
 
       // Try to use cached data first
       const cachedGames = getCachedCollection()
@@ -109,6 +120,14 @@ export default function HomePage() {
           filteredGames = filteredGames.filter((game) => game.minPlayers <= count && game.maxPlayers >= count)
         }
 
+        if (complexity && complexity !== "any") {
+          const [min, max] = complexity.split("-").map(Number)
+          filteredGames = filteredGames.filter((game) => {
+            const weight = game.weight || 0
+            return weight >= min && weight <= max
+          })
+        }
+
         // Sort by rating and limit results
         filteredGames = filteredGames
           .filter((game) => game.rating > 0)
@@ -119,7 +138,7 @@ export default function HomePage() {
         setDebugInfo({
           totalInCollection: cachedGames.length,
           afterFiltering: filteredGames.length,
-          filters: { mechanism, category, playerCount },
+          filters: { mechanism, category, playerCount, complexity },
           cached: true,
           responseTime: "< 1ms (cached)",
         })
@@ -255,7 +274,7 @@ export default function HomePage() {
                   />
                 )}
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div className="space-y-2">
                     <Label className="text-white">Preferred Mechanism</Label>
                     <MechanismCombobox value={mechanism} onValueChange={setMechanism} />
@@ -278,6 +297,25 @@ export default function HomePage() {
                             <div className="flex items-center gap-2">
                               <Users className="w-4 h-4" />
                               {count.label}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-white">Complexity</Label>
+                    <Select value={complexity} onValueChange={setComplexity}>
+                      <SelectTrigger className="bg-purple-800/50 border-purple-600 text-white">
+                        <SelectValue placeholder="Select complexity" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-purple-900 border-purple-700">
+                        {COMPLEXITY_RANGES.map((range) => (
+                          <SelectItem key={range.value} value={range.value} className="text-white focus:bg-purple-800">
+                            <div className="flex items-center gap-2">
+                              <Cog className="w-4 h-4" />
+                              {range.label}
                             </div>
                           </SelectItem>
                         ))}
@@ -379,6 +417,14 @@ export default function HomePage() {
                   <div className="flex items-center gap-1 text-purple-300 text-sm">
                     <Users className="w-3 h-3" />
                     <span className="text-purple-200">{playerCount} players</span>
+                  </div>
+                )}
+                {complexity && complexity !== "any" && (
+                  <div className="flex items-center gap-1 text-purple-300 text-sm">
+                    <Cog className="w-3 h-3" />
+                    <span className="text-purple-200">
+                      {COMPLEXITY_RANGES.find((r) => r.value === complexity)?.label || complexity}
+                    </span>
                   </div>
                 )}
               </div>
