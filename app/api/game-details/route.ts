@@ -156,71 +156,6 @@ function isBestPlayerCount(result: any): boolean {
   return bestVotes >= recommendedVotes && bestVotes >= notRecommendedVotes && totalPositive >= notRecommendedVotes * 1.5
 }
 
-function parseRank(item: any): number {
-  if (!item.statistics?.ratings?.ranks?.rank) {
-    console.log(`No rank data for game ${item["@_id"]}`)
-    return 0
-  }
-
-  const ranks = item.statistics.ratings.ranks.rank
-
-  // Debug logging for specific games
-  if (item["@_id"] === "419704" || item["@_id"] === "317985") {
-    console.log(`Rank debug for game ${item["@_id"]}:`, JSON.stringify(ranks, null, 2))
-  }
-
-  // Handle both single rank and array of ranks
-  if (Array.isArray(ranks)) {
-    // Look for the overall boardgame rank with multiple strategies
-    let boardgameRank = null
-
-    // Strategy 1: Look for name="boardgame"
-    boardgameRank = ranks.find((rank: any) => rank["@_name"] === "boardgame")
-
-    // Strategy 2: Look for type="subtype" and name="boardgame"
-    if (!boardgameRank) {
-      boardgameRank = ranks.find((rank: any) => rank["@_type"] === "subtype" && rank["@_name"] === "boardgame")
-    }
-
-    // Strategy 3: Look for id="1" (BGG's boardgame subtype ID)
-    if (!boardgameRank) {
-      boardgameRank = ranks.find((rank: any) => rank["@_id"] === "1")
-    }
-
-    // Strategy 4: Look for the first rank that's not a family rank
-    if (!boardgameRank) {
-      boardgameRank = ranks.find(
-        (rank: any) => rank["@_type"] === "subtype" && rank["@_value"] && rank["@_value"] !== "Not Ranked",
-      )
-    }
-
-    // Strategy 5: Fallback to any valid rank
-    if (!boardgameRank) {
-      boardgameRank = ranks.find((rank: any) => rank["@_value"] && rank["@_value"] !== "Not Ranked")
-    }
-
-    if (boardgameRank && boardgameRank["@_value"] && boardgameRank["@_value"] !== "Not Ranked") {
-      const rankValue = Number.parseInt(boardgameRank["@_value"])
-      if (!isNaN(rankValue)) {
-        console.log(`Found rank ${rankValue} for game ${item["@_id"]} using strategy`)
-        return rankValue
-      }
-    }
-  } else {
-    // Single rank object
-    if (ranks["@_value"] && ranks["@_value"] !== "Not Ranked") {
-      const rankValue = Number.parseInt(ranks["@_value"])
-      if (!isNaN(rankValue)) {
-        console.log(`Found single rank ${rankValue} for game ${item["@_id"]}`)
-        return rankValue
-      }
-    }
-  }
-
-  console.log(`No valid rank found for game ${item["@_id"]}`)
-  return 0
-}
-
 export async function POST(request: NextRequest) {
   try {
     const { gameIds } = await request.json()
@@ -279,8 +214,11 @@ export async function POST(request: NextRequest) {
               ? Number.parseFloat(item.statistics.ratings.average["@_value"])
               : 0
 
-            // Use the improved rank parsing function
-            const rank = parseRank(item)
+            const rank = item.statistics?.ratings?.ranks?.rank
+              ? Array.isArray(item.statistics.ratings.ranks.rank)
+                ? item.statistics.ratings.ranks.rank.find((r: any) => r["@_name"] === "boardgame")?.["@_value"]
+                : item.statistics.ratings.ranks.rank["@_value"]
+              : null
 
             const weight = item.statistics?.ratings?.averageweight?.["@_value"]
               ? Number.parseFloat(item.statistics.ratings.averageweight["@_value"])
@@ -288,16 +226,6 @@ export async function POST(request: NextRequest) {
 
             // Parse best player counts from community poll
             const bestPlayerCounts = parseBestPlayerCounts(item)
-
-            // Debug logging for rank parsing
-            if (item["@_id"] === "419704" || item["@_id"] === "317985") {
-              console.log(`Detailed rank debug for game ${item["@_id"]} (${name}):`, {
-                id: item["@_id"],
-                name,
-                rawRanks: item.statistics?.ratings?.ranks?.rank,
-                parsedRank: rank,
-              })
-            }
 
             return {
               id: item["@_id"],
@@ -310,7 +238,7 @@ export async function POST(request: NextRequest) {
               maxPlayers: Number.parseInt(item.maxplayers?.["@_value"] || "1"),
               playingTime: Number.parseInt(item.playingtime?.["@_value"] || "0"),
               rating,
-              rank,
+              rank: rank && rank !== "Not Ranked" ? Number.parseInt(rank) : 0,
               weight,
               mechanisms,
               categories,
