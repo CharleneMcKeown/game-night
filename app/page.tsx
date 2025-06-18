@@ -8,10 +8,11 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Loader2, Search, Users, Cog, Tag, Zap, Clock } from "lucide-react"
+import { Loader2, Search, Users, Cog, Tag, Zap, Clock, Star } from "lucide-react"
 import { GameCard } from "@/components/game-card"
 import { MechanismCombobox } from "@/components/mechanism-combobox"
 import { CategoryCombobox } from "@/components/category-combobox"
+import { BestPlayerCountCombobox } from "@/components/best-player-count-combobox"
 import { PreloadStatus } from "@/components/preload-status"
 import { useCollectionPreloader } from "@/hooks/use-collection-preloader"
 
@@ -29,6 +30,7 @@ interface Game {
   rank: number
   mechanisms: string[]
   categories: string[]
+  bestPlayerCounts: number[]
   bggUrl: string
   weight?: number
 }
@@ -65,6 +67,7 @@ export default function HomePage() {
   const [mechanism, setMechanism] = useState("")
   const [category, setCategory] = useState("")
   const [playerCount, setPlayerCount] = useState("")
+  const [bestPlayerCount, setBestPlayerCount] = useState("")
   const [complexity, setComplexity] = useState("")
   const [gameLength, setGameLength] = useState("")
   const [games, setGames] = useState<Game[]>([])
@@ -103,6 +106,7 @@ export default function HomePage() {
       if (mechanism) params.append("mechanism", mechanism)
       if (category) params.append("category", category)
       if (playerCount && playerCount !== "any") params.append("playerCount", playerCount)
+      if (bestPlayerCount && bestPlayerCount !== "any") params.append("bestPlayerCount", bestPlayerCount)
       if (complexity && complexity !== "any") params.append("complexity", complexity)
       if (gameLength && gameLength !== "any") params.append("gameLength", gameLength)
 
@@ -131,6 +135,18 @@ export default function HomePage() {
           filteredGames = filteredGames.filter((game) => game.minPlayers <= count && game.maxPlayers >= count)
         }
 
+        if (bestPlayerCount && bestPlayerCount !== "any") {
+          const count = Number.parseInt(bestPlayerCount)
+          filteredGames = filteredGames.filter((game) => {
+            if (!game.bestPlayerCounts || game.bestPlayerCounts.length === 0) return false
+            // For 8+ players, check if the game's best player counts include 8 or higher
+            if (count === 8) {
+              return game.bestPlayerCounts.some((pc) => pc >= 8)
+            }
+            return game.bestPlayerCounts.includes(count)
+          })
+        }
+
         if (complexity && complexity !== "any") {
           const [min, max] = complexity.split("-").map(Number)
           filteredGames = filteredGames.filter((game) => {
@@ -157,7 +173,7 @@ export default function HomePage() {
         setDebugInfo({
           totalInCollection: cachedGames.length,
           afterFiltering: filteredGames.length,
-          filters: { mechanism, category, playerCount, complexity, gameLength },
+          filters: { mechanism, category, playerCount, bestPlayerCount, complexity, gameLength },
           cached: true,
           responseTime: "< 1ms (cached)",
         })
@@ -258,7 +274,7 @@ export default function HomePage() {
                   />
                 )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
                   <div className="space-y-2">
                     <Label className="text-white">Mechanism</Label>
                     <MechanismCombobox value={mechanism} onValueChange={setMechanism} />
@@ -286,6 +302,14 @@ export default function HomePage() {
                         ))}
                       </SelectContent>
                     </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-white flex items-center gap-1">
+                      <Star className="w-3 h-3 text-yellow-400" />
+                      Best At
+                    </Label>
+                    <BestPlayerCountCombobox value={bestPlayerCount} onValueChange={setBestPlayerCount} />
                   </div>
 
                   <div className="space-y-2">
@@ -408,6 +432,14 @@ export default function HomePage() {
                   <div className="flex items-center gap-1 text-purple-300 text-sm">
                     <Users className="w-3 h-3" />
                     <span className="text-purple-200">{playerCount} players</span>
+                  </div>
+                )}
+                {bestPlayerCount && bestPlayerCount !== "any" && (
+                  <div className="flex items-center gap-1 text-purple-300 text-sm">
+                    <Star className="w-3 h-3 text-yellow-400" />
+                    <span className="text-purple-200">
+                      Best at {bestPlayerCount === "8" ? "8+" : bestPlayerCount} players
+                    </span>
                   </div>
                 )}
                 {complexity && complexity !== "any" && (

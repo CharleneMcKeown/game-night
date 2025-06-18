@@ -15,6 +15,7 @@ interface BGGGame {
   weight: number
   mechanisms: string[]
   categories: string[]
+  bestPlayerCounts: number[]
   bggUrl: string
 }
 
@@ -24,12 +25,22 @@ export async function GET(request: NextRequest) {
   const mechanism = searchParams.get("mechanism")
   const category = searchParams.get("category")
   const playerCount = searchParams.get("playerCount")
+  const bestPlayerCount = searchParams.get("bestPlayerCount")
   const useCache = searchParams.get("useCache") !== "false"
   const complexity = searchParams.get("complexity")
   const gameLength = searchParams.get("gameLength")
 
   console.log("=== Fast Recommendations Request ===")
-  console.log("Params:", { username, mechanism, category, playerCount, useCache, complexity, gameLength })
+  console.log("Params:", {
+    username,
+    mechanism,
+    category,
+    playerCount,
+    bestPlayerCount,
+    useCache,
+    complexity,
+    gameLength,
+  })
 
   if (!username) {
     return NextResponse.json({ error: "BGG username is required" }, { status: 400 })
@@ -86,6 +97,18 @@ export async function GET(request: NextRequest) {
       filteredGames = filteredGames.filter((game) => game.minPlayers <= count && game.maxPlayers >= count)
     }
 
+    if (bestPlayerCount && bestPlayerCount !== "any") {
+      const count = Number.parseInt(bestPlayerCount)
+      filteredGames = filteredGames.filter((game) => {
+        if (!game.bestPlayerCounts || game.bestPlayerCounts.length === 0) return false
+        // For 8+ players, check if the game's best player counts include 8 or higher
+        if (count === 8) {
+          return game.bestPlayerCounts.some((pc) => pc >= 8)
+        }
+        return game.bestPlayerCounts.includes(count)
+      })
+    }
+
     if (complexity && complexity !== "any") {
       const [min, max] = complexity.split("-").map(Number)
       filteredGames = filteredGames.filter((game) => {
@@ -114,7 +137,7 @@ export async function GET(request: NextRequest) {
       debug: {
         totalInCollection: games.length,
         afterFiltering: filteredGames.length,
-        filters: { mechanism, category, playerCount, complexity, gameLength },
+        filters: { mechanism, category, playerCount, bestPlayerCount, complexity, gameLength },
         cached: useCache && games.length > 0,
       },
     })

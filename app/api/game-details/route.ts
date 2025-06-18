@@ -85,6 +85,77 @@ function isExpansion(item: any): boolean {
   return nameIndicatesExpansion
 }
 
+function parseBestPlayerCounts(item: any): number[] {
+  const bestPlayerCounts: number[] = []
+
+  if (!item.poll) return bestPlayerCounts
+
+  const polls = Array.isArray(item.poll) ? item.poll : [item.poll]
+  const playerCountPoll = polls.find((poll: any) => poll["@_name"] === "suggested_numplayers")
+
+  if (!playerCountPoll || !playerCountPoll.results) return bestPlayerCounts
+
+  const results = Array.isArray(playerCountPoll.results) ? playerCountPoll.results : [playerCountPoll.results]
+
+  results.forEach((result: any) => {
+    const numPlayers = result["@_numplayers"]
+    if (!numPlayers || numPlayers === "More than 10") return
+
+    // Handle "8+" case
+    if (numPlayers.includes("+")) {
+      const baseNum = Number.parseInt(numPlayers.replace("+", ""))
+      if (!isNaN(baseNum)) {
+        // For 8+, we'll treat it as 8 for filtering purposes
+        if (baseNum >= 8) {
+          const playerCount = 8
+          if (isBestPlayerCount(result)) {
+            bestPlayerCounts.push(playerCount)
+          }
+        }
+      }
+      return
+    }
+
+    const playerCount = Number.parseInt(numPlayers)
+    if (isNaN(playerCount)) return
+
+    if (isBestPlayerCount(result)) {
+      bestPlayerCounts.push(playerCount)
+    }
+  })
+
+  return [...new Set(bestPlayerCounts)].sort((a, b) => a - b)
+}
+
+function isBestPlayerCount(result: any): boolean {
+  if (!result.result) return false
+
+  const resultItems = Array.isArray(result.result) ? result.result : [result.result]
+
+  let bestVotes = 0
+  let recommendedVotes = 0
+  let notRecommendedVotes = 0
+
+  resultItems.forEach((item: any) => {
+    const value = item["@_value"]
+    const numVotes = Number.parseInt(item["@_numvotes"] || "0")
+
+    if (value === "Best") bestVotes = numVotes
+    else if (value === "Recommended") recommendedVotes = numVotes
+    else if (value === "Not Recommended") notRecommendedVotes = numVotes
+  })
+
+  // Consider it "best" if:
+  // 1. Best votes are the highest, OR
+  // 2. Best + Recommended votes significantly outweigh Not Recommended (at least 2:1 ratio)
+  const totalPositive = bestVotes + recommendedVotes
+  const totalVotes = totalPositive + notRecommendedVotes
+
+  if (totalVotes < 5) return false // Need at least 5 votes to be meaningful
+
+  return bestVotes >= recommendedVotes && bestVotes >= notRecommendedVotes && totalPositive >= notRecommendedVotes * 1.5
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { gameIds } = await request.json()
@@ -153,6 +224,9 @@ export async function POST(request: NextRequest) {
               ? Number.parseFloat(item.statistics.ratings.averageweight["@_value"])
               : 0
 
+            // Parse best player counts from community poll
+            const bestPlayerCounts = parseBestPlayerCounts(item)
+
             return {
               id: item["@_id"],
               name,
@@ -168,6 +242,7 @@ export async function POST(request: NextRequest) {
               weight,
               mechanisms,
               categories,
+              bestPlayerCounts, // Add the parsed best player counts
               bggUrl: `https://boardgamegeek.com/boardgame/${item["@_id"]}`,
             }
           })
