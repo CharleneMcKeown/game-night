@@ -208,16 +208,21 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-purple-950 text-white">
       {/* Header */}
-      <header className="border-b border-purple-800 bg-purple-900/50">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-white rounded-sm flex items-center justify-center">
-              <Dices className="w-5 h-5 text-purple-900" />
+      <header className="border-b border-purple-800 bg-gradient-to-r from-purple-900 to-purple-800 shadow-lg">
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex items-center justify-center space-x-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-lg flex items-center justify-center shadow-lg transform rotate-12">
+              <Dices className="w-7 h-7 text-white" />
             </div>
-            <h1 className="text-2xl font-bold text-white">Off the Shelf</h1>
-            <div className="flex items-center gap-1 text-xs bg-purple-600 text-white px-2 py-1 rounded">
-              <Zap className="w-3 h-3" />
-              FAST
+            <div className="text-center">
+              <h1 className="text-4xl md:text-5xl font-black text-transparent bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 bg-clip-text">
+                Off the Shelf
+              </h1>
+              <p className="text-sm text-purple-200 font-medium tracking-wide">BOARD GAME PICKER</p>
+            </div>
+            <div className="flex items-center gap-1 text-xs bg-gradient-to-r from-green-500 to-emerald-600 text-white px-3 py-2 rounded-full font-bold shadow-lg">
+              <Zap className="w-4 h-4" />
+              INSTANT
             </div>
           </div>
         </div>
@@ -226,13 +231,23 @@ export default function HomePage() {
       {/* Hero Section */}
       <section className="py-20 px-4">
         <div className="container mx-auto max-w-4xl text-center">
-          <h2 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-white to-purple-200 bg-clip-text text-transparent">
-            No more decision fatigue - we'll pick the game, you bring the snacks.
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-black mb-8 text-center">
+            <span className="block text-white mb-2">No more</span>
+            <span className="block bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 bg-clip-text text-transparent">
+              decision fatigue
+            </span>
+            <span className="block text-purple-200 text-2xl md:text-3xl lg:text-4xl font-bold mt-4">
+              we'll pick the game, you bring the snacks
+            </span>
           </h2>
-          <p className="text-xl text-purple-200 mb-12 max-w-2xl mx-auto">
-            Smart suggestions from your BoardGameGeek collection - tailored to your mood, group, time, complexity, and
-            mechanics.
-            <span className="block text-sm text-purple-300 mt-2">
+          <p className="text-lg md:text-xl text-purple-100 mb-12 max-w-3xl mx-auto leading-relaxed">
+            Smart suggestions from your BoardGameGeek collection - tailored to your
+            <span className="text-yellow-400 font-semibold"> mood</span>,
+            <span className="text-orange-400 font-semibold"> group</span>,
+            <span className="text-red-400 font-semibold"> time</span>,
+            <span className="text-pink-400 font-semibold"> complexity</span>, and
+            <span className="text-purple-300 font-semibold"> mechanics</span>.
+            <span className="block text-base text-green-300 mt-3 font-medium">
               ⚡ Now with instant recommendations via smart caching
             </span>
           </p>
@@ -351,19 +366,19 @@ export default function HomePage() {
 
                 <Button
                   type="submit"
-                  className="w-full bg-white text-purple-900 hover:bg-purple-100"
+                  className="w-full bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 text-white font-bold text-lg py-4 hover:from-yellow-500 hover:via-orange-600 hover:to-red-600 transform hover:scale-105 transition-all duration-200 shadow-lg"
                   disabled={loading}
                 >
                   {loading ? (
                     <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Finding Games...
+                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                      Finding Your Perfect Game...
                     </>
                   ) : (
                     <>
-                      <Search className="w-4 h-4 mr-2" />
-                      Get Recommendations
-                      {isPreloaded && <Zap className="w-3 h-3 ml-1" />}
+                      <Dices className="w-5 h-5 mr-2" />
+                      Pick My Game!
+                      {isPreloaded && <Zap className="w-4 h-4 ml-2" />}
                     </>
                   )}
                 </Button>
