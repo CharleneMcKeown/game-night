@@ -84,7 +84,9 @@ export async function GET(request: NextRequest) {
       }
 
       // Additional check for expansion indicators in the name
-      const name = item.name?.["#text"] || item.name || ""
+      const rawName = item.name?.["#text"] || item.name || ""
+      const name = typeof rawName === "string" ? rawName : String(rawName || "")
+
       const expansionKeywords = [
         "expansion",
         "extend",
