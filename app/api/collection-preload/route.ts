@@ -43,6 +43,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Username is required" }, { status: 400 })
   }
 
+  console.log(`=== Collection Preload Debug for: ${username} ===`)
+
   try {
     // Only fetch base games, not expansions
     const collectionEndpoints = [
@@ -52,29 +54,78 @@ export async function GET(request: NextRequest) {
     ]
 
     let collectionData = null
+    let lastError = null
+    let lastResponse = null
 
     for (const endpoint of collectionEndpoints) {
+      console.log(`Trying endpoint: ${endpoint}`)
       try {
         const response = await fetchWithRetry(endpoint, 2)
         const text = await response.text()
 
-        if (text && text.trim() && !text.includes("Invalid username")) {
-          collectionData = parser.parse(text)
-          break
+        console.log(`Response status: ${response.status}`)
+        console.log(`Response length: ${text.length}`)
+        console.log(`First 200 chars: ${text.substring(0, 200)}`)
+
+        lastResponse = { status: response.status, text: text.substring(0, 500) }
+
+        // Check for common BGG error messages
+        if (text.includes("Invalid username")) {
+          lastError = "Invalid username - user does not exist on BGG"
+          continue
+        }
+
+        if (text.includes("User has not marked any items as owned")) {
+          lastError = "User has no owned games in their collection"
+          continue
+        }
+
+        if (text.includes("User's collection is private")) {
+          lastError = "User's collection is set to private"
+          continue
+        }
+
+        if (text && text.trim() && text.includes("<items")) {
+          try {
+            collectionData = parser.parse(text)
+            console.log(`Successfully parsed collection data`)
+            break
+          } catch (parseError) {
+            console.log(`Parse error: ${parseError}`)
+            lastError = `Failed to parse XML: ${parseError}`
+            continue
+          }
+        } else {
+          lastError = "Empty or invalid response from BGG"
         }
       } catch (error) {
+        console.log(`Endpoint error: ${error}`)
+        lastError = error instanceof Error ? error.message : "Unknown error"
         continue
       }
     }
 
     if (!collectionData) {
-      return NextResponse.json({ error: "Could not fetch collection" }, { status: 404 })
+      console.log(`=== Final Error for ${username}: ${lastError} ===`)
+      return NextResponse.json(
+        {
+          error: lastError || "Could not fetch collection",
+          debug: {
+            username,
+            lastResponse,
+            testedEndpoints: collectionEndpoints.length,
+          },
+        },
+        { status: 404 },
+      )
     }
 
     let items = []
     if (collectionData.items && collectionData.items.item) {
       items = Array.isArray(collectionData.items.item) ? collectionData.items.item : [collectionData.items.item]
     }
+
+    console.log(`Found ${items.length} total items in collection`)
 
     // Filter out expansions at the collection level
     const baseGameItems = items.filter((item: any) => {
@@ -109,7 +160,7 @@ export async function GET(request: NextRequest) {
     const gameIds = baseGameItems.map((item: any) => item["@_objectid"]).filter(Boolean)
 
     console.log(
-      `Filtered collection: ${items.length} total items, ${gameIds.length} base games (filtered out ${items.length - gameIds.length} expansions)`,
+      `=== Success for ${username}: ${items.length} total items, ${gameIds.length} base games (filtered out ${items.length - gameIds.length} expansions) ===`,
     )
 
     return NextResponse.json({
@@ -120,7 +171,17 @@ export async function GET(request: NextRequest) {
       timestamp: Date.now(),
     })
   } catch (error) {
-    console.error("Collection preload error:", error)
-    return NextResponse.json({ error: "Failed to preload collection" }, { status: 500 })
+    console.error(`=== Collection preload error for ${username}:`, error)
+    return NextResponse.json(
+      {
+        error: "Failed to preload collection",
+        debug: {
+          username,
+          errorMessage: error instanceof Error ? error.message : "Unknown error",
+          errorStack: error instanceof Error ? error.stack : undefined,
+        },
+      },
+      { status: 500 },
+    )
   }
 }
