@@ -43,6 +43,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Username is required" }, { status: 400 })
   }
 
+  console.log(`=== Collection Preload for: ${username} ===`)
+
   try {
     // Only fetch base games, not expansions
     const collectionEndpoints = [
@@ -52,29 +54,95 @@ export async function GET(request: NextRequest) {
     ]
 
     let collectionData = null
+    let lastError = null
 
     for (const endpoint of collectionEndpoints) {
+      console.log(`Trying endpoint: ${endpoint}`)
       try {
         const response = await fetchWithRetry(endpoint, 2)
         const text = await response.text()
 
-        if (text && text.trim() && !text.includes("Invalid username")) {
-          collectionData = parser.parse(text)
-          break
+        console.log(`Response status: ${response.status}, length: ${text.length}`)
+
+        // Check for specific BGG error messages
+        if (text.includes("Invalid username")) {
+          lastError = "This username doesn't exist on BoardGameGeek. Please check the spelling and try again."
+          continue
+        }
+
+        if (text.includes("User has not marked any items as owned")) {
+          lastError =
+            "This user hasn't marked any games as owned in their collection. Make sure you've added games to your BGG collection and marked them as 'owned'."
+          continue
+        }
+
+        // Check for private collection indicators
+        if (
+          text.includes("private") ||
+          text.includes("Private") ||
+          text.includes("not public") ||
+          text.includes("access denied") ||
+          (response.status === 200 && text.trim().length < 50)
+        ) {
+          lastError =
+            "This user's collection appears to be private. Please make sure your BGG collection is set to public in your account settings."
+          continue
+        }
+
+        // Check for valid XML response with items
+        if (text && text.trim() && text.includes("<items")) {
+          try {
+            collectionData = parser.parse(text)
+            console.log(`Successfully parsed collection data`)
+            break
+          } catch (parseError) {
+            console.log(`Parse error: ${parseError}`)
+            lastError = "Unable to read collection data from BoardGameGeek. Please try again later."
+            continue
+          }
+        } else if (text.trim().length === 0) {
+          lastError =
+            "Received empty response from BoardGameGeek. The user may not exist or their collection may be private."
+        } else {
+          lastError =
+            "Unable to access collection data. Please check that the username is correct and the collection is public."
         }
       } catch (error) {
+        console.log(`Endpoint error: ${error}`)
+        lastError = error instanceof Error ? error.message : "Network error while fetching collection"
         continue
       }
     }
 
     if (!collectionData) {
-      return NextResponse.json({ error: "Could not fetch collection" }, { status: 404 })
+      console.log(`=== Final Error for ${username}: ${lastError} ===`)
+      return NextResponse.json(
+        {
+          error: lastError || "Could not fetch collection from BoardGameGeek",
+          userFriendly: true,
+        },
+        { status: 404 },
+      )
     }
 
     let items = []
     if (collectionData.items && collectionData.items.item) {
       items = Array.isArray(collectionData.items.item) ? collectionData.items.item : [collectionData.items.item]
     }
+
+    // Check if collection is empty after parsing
+    if (items.length === 0) {
+      return NextResponse.json(
+        {
+          error:
+            "This user's collection appears to be empty or contains no board games marked as 'owned'. Please make sure you have games in your BGG collection marked as owned.",
+          userFriendly: true,
+        },
+        { status: 404 },
+      )
+    }
+
+    console.log(`Found ${items.length} total items in collection`)
 
     // Filter out expansions at the collection level
     const baseGameItems = items.filter((item: any) => {
@@ -108,8 +176,19 @@ export async function GET(request: NextRequest) {
 
     const gameIds = baseGameItems.map((item: any) => item["@_objectid"]).filter(Boolean)
 
+    // Check if we have any base games after filtering
+    if (gameIds.length === 0) {
+      return NextResponse.json(
+        {
+          error: "No base games found in this collection. The collection may only contain expansions or accessories.",
+          userFriendly: true,
+        },
+        { status: 404 },
+      )
+    }
+
     console.log(
-      `Filtered collection: ${items.length} total items, ${gameIds.length} base games (filtered out ${items.length - gameIds.length} expansions)`,
+      `=== Success for ${username}: ${items.length} total items, ${gameIds.length} base games (filtered out ${items.length - gameIds.length} expansions) ===`,
     )
 
     return NextResponse.json({
@@ -120,7 +199,13 @@ export async function GET(request: NextRequest) {
       timestamp: Date.now(),
     })
   } catch (error) {
-    console.error("Collection preload error:", error)
-    return NextResponse.json({ error: "Failed to preload collection" }, { status: 500 })
+    console.error(`=== Collection preload error for ${username}:`, error)
+    return NextResponse.json(
+      {
+        error: "Unable to connect to BoardGameGeek. Please check your internet connection and try again.",
+        userFriendly: true,
+      },
+      { status: 500 },
+    )
   }
 }
