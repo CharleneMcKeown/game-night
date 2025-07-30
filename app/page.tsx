@@ -248,7 +248,7 @@ export default function HomePage() {
             <span className="text-pink-400 font-semibold"> complexity</span>, and
             <span className="text-purple-300 font-semibold"> mechanics</span>.
             <span className="block text-base text-green-300 mt-3 font-medium">
-              ⚡ Now with instant recommendations via smart caching
+              ⚡ Now with instant recommendations via smart caching ⚡ 
             </span>
           </p>
 
