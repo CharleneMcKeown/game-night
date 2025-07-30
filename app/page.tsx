@@ -394,19 +394,20 @@ export default function HomePage() {
 
                 <Button
                   type="submit"
-                  className="w-full bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 text-white font-bold text-lg py-4 hover:from-yellow-500 hover:via-orange-600 hover:to-red-600 transform hover:scale-105 transition-all duration-200 shadow-lg"
+                  // Enhanced button styling for better visibility and readability
+                  className="w-full bg-gradient-to-r from-amber-400 via-orange-500 to-red-500 text-white font-black text-xl md:text-2xl py-6 px-8 hover:from-amber-500 hover:via-orange-600 hover:to-red-600 transform hover:scale-105 transition-all duration-300 shadow-2xl border-2 border-white/20 hover:border-white/40 rounded-xl"
                   disabled={loading}
                 >
                   {loading ? (
                     <>
-                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                      Finding Your Perfect Game...
+                      <Loader2 className="w-6 h-6 mr-3 animate-spin" />
+                      <span className="font-bold tracking-wide">Finding Your Perfect Game...</span>
                     </>
                   ) : (
                     <>
-                      <Dices className="w-5 h-5 mr-2" />
-                      Pick My Game!
-                      {isPreloaded && <Zap className="w-4 h-4 ml-2" />}
+                      <Dices className="w-6 h-6 mr-3" />
+                      <span className="font-black tracking-wide">Pick My Game!</span>
+                      {isPreloaded && <Zap className="w-5 h-5 ml-3 text-yellow-200" />}
                     </>
                   )}
                 </Button>
