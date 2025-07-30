@@ -10,6 +10,21 @@ body {
   .text-balance {
     text-wrap: balance;
   }
+
+  /* Add spinning animation for the dice icon */
+  .animate-dice-spin {
+    animation: dice-spin 2s linear infinite;
+  }
+}
+
+/* Define the dice spinning keyframes */
+@keyframes dice-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @layer base {
