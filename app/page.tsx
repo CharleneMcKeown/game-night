@@ -212,7 +212,8 @@ export default function HomePage() {
         <div className="container mx-auto px-4 py-8">
           <div className="flex items-center justify-center space-x-4">
             <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-lg flex items-center justify-center shadow-lg transform rotate-12">
-              <Dices className="w-7 h-7 text-white" />
+              {/* Added spinning animation to the dice icon */}
+              <Dices className="w-7 h-7 text-white animate-dice-spin" />
             </div>
             <div className="text-center">
               <h1 className="text-4xl md:text-5xl font-black text-transparent bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 bg-clip-text">
@@ -248,7 +249,7 @@ export default function HomePage() {
             <span className="text-pink-400 font-semibold"> complexity</span>, and
             <span className="text-purple-300 font-semibold"> mechanics</span>.
             <span className="block text-base text-green-300 mt-3 font-medium">
-              ⚡ Now with instant recommendations via smart caching ⚡ 
+              ⚡ Now with instant recommendations via smart caching ⚡
             </span>
           </p>
 
@@ -492,3 +493,21 @@ export default function HomePage() {
     </div>
   )
 }
+
+// Add CSS for the dice spin animation
+const styles = `
+@keyframes dice-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.animate-dice-spin {
+  animation: dice-spin 2s linear infinite;
+}
+`
+
+// Inject styles into the document
+const styleSheet = document.createElement("style")
+styleSheet.type = "text/css"
+styleSheet.innerText = styles
+document.head.appendChild(styleSheet)
