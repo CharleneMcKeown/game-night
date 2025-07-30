@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -204,6 +204,33 @@ export default function HomePage() {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    // Add CSS for the dice spin animation
+    const styles = `
+@keyframes dice-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.animate-dice-spin {
+  animation: dice-spin 2s linear infinite;
+}
+`
+
+    // Inject styles into the document only on client-side
+    const styleSheet = document.createElement("style")
+    styleSheet.type = "text/css"
+    styleSheet.innerText = styles
+    document.head.appendChild(styleSheet)
+
+    // Cleanup function to remove the style when component unmounts
+    return () => {
+      if (document.head.contains(styleSheet)) {
+        document.head.removeChild(styleSheet)
+      }
+    }
+  }, [])
 
   return (
     <div className="min-h-screen bg-purple-950 text-white">
@@ -493,21 +520,3 @@ export default function HomePage() {
     </div>
   )
 }
-
-// Add CSS for the dice spin animation
-const styles = `
-@keyframes dice-spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.animate-dice-spin {
-  animation: dice-spin 2s linear infinite;
-}
-`
-
-// Inject styles into the document
-const styleSheet = document.createElement("style")
-styleSheet.type = "text/css"
-styleSheet.innerText = styles
-document.head.appendChild(styleSheet)
